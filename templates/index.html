@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Pakar Fuzzy - Diagnosis Hama Padi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .slider-value {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-diagnose {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-diagnose:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-test {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-test:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .btn-reset {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #da190b;
+            transform: scale(1.05);
+        }
+
+        .results {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .diagnosis-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .diagnosis-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .confidence {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .confidence-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .scores-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .score-item {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .score-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .recommendations {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+            margin-top: 20px;
+        }
+
+        .recommendations h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .recommendations ul {
+            list-style: none;
+            margin-left: 20px;
+        }
+
+        .recommendations li {
+            margin: 8px 0;
+            color: #555;
+            position: relative;
+        }
+
+        .recommendations li:before {
+            content: "✓";
+            position: absolute;
+            left: -20px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .test-cases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .test-case-btn {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .test-case-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .test-case-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .test-case-desc {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .scores-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌾 Sistem Pakar Fuzzy Diagnosis Hama Padi</h1>
+            <p>Deteksi Wereng (Planthopper) vs Tikus (Rat) menggunakan Logika Fuzzy</p>
+        </div>
+
+        <div class="main-content">
+            <!-- FORM INPUT -->
+            <div class="card">
+                <h2>📊 Input Gejala</h2>
+                
+                <div class="form-group">
+                    <label for="kerusakan_daun">Kerusakan Daun (%)</label>
+                    <div style="display: flex; align-items: center;">
+                        <input type="range" id="kerusakan_daun" min="0" max="100" value="50" 
+                               style="flex: 1; margin-right: 10px;">
+                        <span class="slider-value" id="daun-value">50%</span>
+                    </div>
+                    <p class="input-hint">0: Tidak ada kerusakan | 100: Kerusakan total</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="pola_kerusakan">Pola Kerusakan</label>
+                    <select id="pola_kerusakan">
+                        <option value="10">Merata (0-33) - Ciri Wereng</option>
+                        <option value="50" selected>Campuran (34-66) - Tidak jelas</option>
+                        <option value="90">Spot (67-100) - Ciri Tikus</option>
+                    </select>
+                    <p class="input-hint">Tipe pola kerusakan pada daun</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="kerusakan_batang">Kerusakan Batang (%)</label>
+                    <div style="display: flex; align-items: center;">
+                        <input type="range" id="kerusakan_batang" min="0" max="100" value="50"
+                               style="flex: 1; margin-right: 10px;">
+                        <span class="slider-value" id="batang-value">50%</span>
+                    </div>
+                    <p class="input-hint">0-33: Layu (Wereng) | 34-66: Lubang | 67-100: Terpotong (Tikus)</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="waktu_serangan">Waktu Serangan</label>
+                    <select id="waktu_serangan">
+                        <option value="10">Siang (0-33) - Ciri Wereng</option>
+                        <option value="50" selected>Campuran (34-66) - Tidak jelas</option>
+                        <option value="90">Malam (67-100) - Ciri Tikus</option>
+                    </select>
+                    <p class="input-hint">Waktu puncak kehadiran hama</p>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-diagnose" onclick="diagnoseNow()">🔍 Diagnosa</button>
+                    <button class="btn-reset" onclick="resetForm()">↺ Reset</button>
+                </div>
+            </div>
+
+            <!-- QUICK TEST CASES -->
+            <div class="card">
+                <h2>⚡ Test Cases Cepat</h2>
+                <p style="margin-bottom: 15px; color: #666;">Klik untuk menjalankan scenario predefinisi</p>
+                
+                <div class="test-cases">
+                    <button class="test-case-btn" onclick="runTestCase(0)">
+                        <div class="test-case-name">🐛 Wereng Kuat</div>
+                        <div class="test-case-desc">Daun 80%, Pola merata</div>
+                    </button>
+                    <button class="test-case-btn" onclick="runTestCase(1)">
+                        <div class="test-case-name">🐭 Tikus Kuat</div>
+                        <div class="test-case-desc">Batang putus, malam</div>
+                    </button>
+                    <button class="test-case-btn" onclick="runTestCase(2)">
+                        <div class="test-case-name">❓ Ambigus</div>
+                        <div class="test-case-desc">Semua nilai 50%</div>
+                    </button>
+                    <button class="test-case-btn" onclick="runTestCase(3)">
+                        <div class="test-case-name">🌙 Lubang+Malam</div>
+                        <div class="test-case-desc">Kondong tikus</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="results" id="results">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Sedang memproses diagnosis...</p>
+            </div>
+
+            <div id="result-content">
+                <!-- Akan diisi oleh JavaScript -->
+            </div>
+
+            <div class="error" id="error">
+                <!-- Error message akan ditampilkan di sini -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update slider value display
+        document.getElementById('kerusakan_daun').addEventListener('input', function() {
+            document.getElementById('daun-value').textContent = this.value + '%';
+        });
+
+        document.getElementById('kerusakan_batang').addEventListener('input', function() {
+            document.getElementById('batang-value').textContent = this.value + '%';
+        });
+
+        // Fungsi Diagnosa
+        async function diagnoseNow() {
+            const data = {
+                kerusakan_daun: parseFloat(document.getElementById('kerusakan_daun').value),
+                pola_kerusakan: parseFloat(document.getElementById('pola_kerusakan').value),
+                kerusakan_batang: parseFloat(document.getElementById('kerusakan_batang').value),
+                waktu_serangan: parseFloat(document.getElementById('waktu_serangan').value)
+            };
+
+            await sendDiagnosis(data);
+        }
+
+        // Fungsi untuk Test Cases
+        async function runTestCase(caseIndex) {
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/api/test-cases');
+                const results = await response.json();
+                
+                if (results[caseIndex]) {
+                    const testResult = results[caseIndex];
+                    const data = testResult.input;
+                    
+                    // Update form fields
+                    document.getElementById('kerusakan_daun').value = data.kerusakan_daun;
+                    document.getElementById('kerusakan_batang').value = data.kerusakan_batang;
+                    document.getElementById('pola_kerusakan').value = data.pola_kerusakan;
+                    document.getElementById('waktu_serangan').value = data.waktu_serangan;
+                    
+                    // Update slider displays
+                    document.getElementById('daun-value').textContent = data.kerusakan_daun + '%';
+                    document.getElementById('batang-value').textContent = data.kerusakan_batang + '%';
+                    
+                    // Tampilkan hasil
+                    displayResults(testResult);
+                    showLoading(false);
+                    
+                    // Scroll ke results
+                    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+                }
+            } catch (error) {
+                showError('Error loading test case: ' + error.message);
+                showLoading(false);
+            }
+        }
+
+        // Send diagnosis request
+        async function sendDiagnosis(data) {
+            showLoading(true);
+            hideError();
+            
+            try {
+                const response = await fetch('/api/diagnose', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error in diagnosis');
+                }
+
+                const result = await response.json();
+                displayResults(result);
+                showLoading(false);
+                
+                // Scroll ke results
+                setTimeout(() => {
+                    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+            } catch (error) {
+                showError(error.message);
+                showLoading(false);
+            }
+        }
+
+        // Display results
+        function displayResults(result) {
+            const content = document.getElementById('result-content');
+            
+            const html = `
+                <div class="diagnosis-box">
+                    <div class="diagnosis-name">${result.diagnosis}</div>
+                    <div class="confidence-label">Tingkat Kepercayaan</div>
+                    <div class="confidence">${result.confidence.toFixed(1)}%</div>
+                </div>
+
+                <div class="scores-grid">
+                    <div class="score-item">
+                        <div class="score-label">🐛 Skor Wereng</div>
+                        <div class="score-value">${result.skor_wereng.toFixed(2)}</div>
+                        <div class="score-label">${result.pct_wereng.toFixed(1)}%</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">🐭 Skor Tikus</div>
+                        <div class="score-value">${result.skor_tikus.toFixed(2)}</div>
+                        <div class="score-label">${result.pct_tikus.toFixed(1)}%</div>
+                    </div>
+                </div>
+
+                <div class="recommendations">
+                    <h3>💊 Rekomendasi Penanganan:</h3>
+                    <ul>
+                        ${result.penanganan.map(p => `<li>${p}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+            document.getElementById('results').classList.add('active');
+        }
+
+        // Helper functions
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.add('active');
+            } else {
+                loading.classList.remove('active');
+            }
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.classList.add('active');
+        }
+
+        function hideError() {
+            const error = document.getElementById('error');
+            error.classList.remove('active');
+        }
+
+        function resetForm() {
+            document.getElementById('kerusakan_daun').value = 50;
+            document.getElementById('kerusakan_batang').value = 50;
+            document.getElementById('pola_kerusakan').value = 50;
+            document.getElementById('waktu_serangan').value = 50;
+            
+            document.getElementById('daun-value').textContent = '50%';
+            document.getElementById('batang-value').textContent = '50%';
+            
+            document.getElementById('results').classList.remove('active');
+            hideError();
+        }
+    </script>
+</body>
+</html>
