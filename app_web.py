@@ -21,27 +21,27 @@ def trapmf(x, a, b, c, d):
 # 2. FUZZIFIKASI INPUT
 # ============================================================
 def fuzzify_kerusakan_daun(nilai):
-    rendah = trapmf(nilai, 0, 0, 20, 40)
-    sedang = trimf(nilai, 20, 50, 80)
-    tinggi = trapmf(nilai, 60, 80, 100, 101)  # FIXED: Changed 100 to 101 for proper boundary
+    rendah = trapmf(nilai, 0, 0, 25, 50)
+    sedang = trimf(nilai, 25, 50, 75)
+    tinggi = trapmf(nilai, 50, 75, 100, 101)  # FIXED: Changed boundaries for better coverage
     return {"rendah": rendah, "sedang": sedang, "tinggi": tinggi}
 
 def fuzzify_pola_kerusakan(nilai):
-    merata = trapmf(nilai, 0, 0, 20, 40)
-    campuran = trimf(nilai, 20, 50, 80)
-    spot = trapmf(nilai, 60, 80, 100, 101)  # FIXED: Changed 100 to 101 for proper boundary
+    merata = trapmf(nilai, 0, 0, 25, 50)
+    campuran = trimf(nilai, 25, 50, 75)
+    spot = trapmf(nilai, 50, 75, 100, 101)  # FIXED: Improved boundaries for better coverage
     return {"merata": merata, "campuran": campuran, "spot": spot}
 
 def fuzzify_kerusakan_batang(nilai):
-    layu = trapmf(nilai, 0, 0, 20, 40)
+    layu = trapmf(nilai, 0, 0, 25, 50)
     lubang = trimf(nilai, 25, 50, 75)
-    potong = trapmf(nilai, 60, 80, 100, 101)  # FIXED: Changed 100 to 101 for proper boundary
+    potong = trapmf(nilai, 50, 75, 100, 101)  # FIXED: Improved boundaries for better coverage
     return {"layu": layu, "lubang": lubang, "potong": potong}
 
 def fuzzify_waktu_serangan(nilai):
-    siang = trapmf(nilai, 0, 0, 20, 40)
-    campuran = trimf(nilai, 20, 50, 80)
-    malam = trapmf(nilai, 60, 80, 100, 101)  # FIXED: Changed 100 to 101 for proper boundary
+    siang = trapmf(nilai, 0, 0, 25, 50)
+    campuran = trimf(nilai, 25, 50, 75)
+    malam = trapmf(nilai, 50, 75, 100, 101)  # FIXED: Improved boundaries for better coverage
     return {"siang": siang, "campuran": campuran, "malam": malam}
 
 # ============================================================
@@ -55,19 +55,34 @@ def apply_rules(daun, pola, batang, waktu):
     rules.append(("wereng", "tinggi", min(daun["tinggi"], pola["merata"], batang["layu"], waktu["campuran"])))
     rules.append(("wereng", "tinggi", min(daun["tinggi"], pola["merata"], batang["layu"])))
     
+    # More responsive rules for wereng
+    rules.append(("wereng", "tinggi", min(daun["tinggi"], pola["merata"])))
+    rules.append(("wereng", "tinggi", min(daun["tinggi"], batang["layu"])))
+    
     rules.append(("wereng", "sedang", min(daun["sedang"], pola["merata"], batang["layu"])))
     rules.append(("wereng", "sedang", min(daun["tinggi"], pola["campuran"], batang["layu"])))
     rules.append(("wereng", "sedang", min(pola["merata"], batang["layu"], waktu["siang"])))
     rules.append(("wereng", "sedang", min(daun["sedang"], waktu["siang"], pola["merata"])))
     rules.append(("wereng", "sedang", min(daun["sedang"], pola["campuran"], waktu["siang"])))
     
+    # More responsive rules for wereng (general)
+    rules.append(("wereng", "sedang", min(daun["sedang"], pola["merata"])))
+    rules.append(("wereng", "sedang", min(daun["sedang"], batang["layu"])))
+    rules.append(("wereng", "sedang", min(pola["merata"], batang["layu"])))
+    
     rules.append(("wereng", "rendah", min(daun["rendah"], pola["merata"], batang["layu"])))
+    rules.append(("wereng", "rendah", min(daun["rendah"], pola["merata"])))
+    rules.append(("wereng", "rendah", min(daun["rendah"], batang["layu"])))
     
     # TIKUS RULES
     rules.append(("tikus", "tinggi", min(batang["potong"], pola["spot"], waktu["malam"])))
     rules.append(("tikus", "tinggi", min(batang["potong"], pola["spot"])))
     rules.append(("tikus", "tinggi", min(daun["rendah"], batang["potong"], waktu["malam"])))
     rules.append(("tikus", "tinggi", min(daun["rendah"], batang["potong"], pola["spot"])))
+    
+    # More responsive rules for tikus
+    rules.append(("tikus", "tinggi", min(batang["potong"], pola["spot"])))
+    rules.append(("tikus", "tinggi", min(batang["potong"], waktu["malam"])))
     
     rules.append(("tikus", "sedang", min(batang["lubang"], pola["spot"], waktu["malam"])))
     rules.append(("tikus", "sedang", min(daun["rendah"], pola["spot"], batang["potong"])))
@@ -76,8 +91,14 @@ def apply_rules(daun, pola, batang, waktu):
     rules.append(("tikus", "sedang", min(batang["lubang"], waktu["campuran"], pola["spot"])))
     rules.append(("tikus", "sedang", min(daun["sedang"], pola["spot"], waktu["malam"])))
     
+    # More responsive rules for tikus (general)
+    rules.append(("tikus", "sedang", min(batang["lubang"], pola["spot"])))
+    rules.append(("tikus", "sedang", min(pola["spot"], waktu["malam"])))
+    rules.append(("tikus", "sedang", min(batang["lubang"], waktu["campuran"])))
+    
     rules.append(("tikus", "rendah", min(batang["lubang"], waktu["campuran"])))
     rules.append(("tikus", "rendah", min(daun["rendah"], pola["campuran"], waktu["malam"])))
+    rules.append(("tikus", "rendah", min(batang["lubang"], daun["rendah"])))
     
     return rules
 
@@ -114,28 +135,38 @@ def diagnosa(kerusakan_daun, pola_kerusakan, kerusakan_batang, waktu_serangan):
     skor_wereng = defuzzify(rules, "wereng")
     skor_tikus = defuzzify(rules, "tikus")
     total = skor_wereng + skor_tikus
+    
+    # Handle case ketika kedua skor 0 (tidak ada diagnosis yang jelas)
     if total == 0:
-        pct_wereng = pct_tikus = 50.0
+        pct_wereng = 0.0
+        pct_tikus = 0.0
+        diagnosis = "Tidak dapat ditentukan"
+        confidence = 0.0
+        penanganan = [
+            "Lakukan pengamatan lebih lanjut pada tanaman",
+            "Periksa kondisi tanaman secara menyeluruh",
+            "Konsultasikan dengan ahli pertanian jika gejala berlanjut"
+        ]
     else:
         pct_wereng = round((skor_wereng / total) * 100, 1)
         pct_tikus = round((skor_tikus / total) * 100, 1)
-    if pct_wereng >= pct_tikus:
-        diagnosis = "Wereng (Planthopper)"
-        confidence = pct_wereng
-        penanganan = [
-            "Semprotkan insektisida (malathion, imidakloprid)",
-            "Gunakan perangkap kuning untuk monitoring",
-            "Tanam varietas tahan wereng"
-        ]
-    else:
-        diagnosis = "Tikus (Rat)"
-        confidence = pct_tikus
-        penanganan = [
-            "Semprotkan rodentisida (phosphine, coumatetralyl)",
-            "Pasang perangkap tikus",
-            "Kontrol gulma dan sisa panen",
-            "Karantina area yang terjangkit"
-        ]
+        if pct_wereng >= pct_tikus:
+            diagnosis = "Wereng (Planthopper)"
+            confidence = pct_wereng
+            penanganan = [
+                "Semprotkan insektisida (malathion, imidakloprid)",
+                "Gunakan perangkap kuning untuk monitoring",
+                "Tanam varietas tahan wereng"
+            ]
+        else:
+            diagnosis = "Tikus (Rat)"
+            confidence = pct_tikus
+            penanganan = [
+                "Semprotkan rodentisida (phosphine, coumatetralyl)",
+                "Pasang perangkap tikus",
+                "Kontrol gulma dan sisa panen",
+                "Karantina area yang terjangkit"
+            ]
     return {
         "diagnosis": diagnosis, "confidence": confidence,
         "skor_wereng": skor_wereng, "skor_tikus": skor_tikus,
