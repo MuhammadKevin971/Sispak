@@ -50,12 +50,10 @@ def fuzzify_waktu_serangan(nilai):
 def apply_rules(daun, pola, batang, waktu):
     rules = []
     
-    # WERENG RULES
+    # WERENG RULES (fokus pada siang dan pola merata)
     rules.append(("wereng", "tinggi", min(daun["tinggi"], pola["merata"], batang["layu"], waktu["siang"])))
     rules.append(("wereng", "tinggi", min(daun["tinggi"], pola["merata"], batang["layu"], waktu["campuran"])))
     rules.append(("wereng", "tinggi", min(daun["tinggi"], pola["merata"], batang["layu"])))
-    
-    # More responsive rules for wereng
     rules.append(("wereng", "tinggi", min(daun["tinggi"], pola["merata"])))
     rules.append(("wereng", "tinggi", min(daun["tinggi"], batang["layu"])))
     
@@ -64,8 +62,6 @@ def apply_rules(daun, pola, batang, waktu):
     rules.append(("wereng", "sedang", min(pola["merata"], batang["layu"], waktu["siang"])))
     rules.append(("wereng", "sedang", min(daun["sedang"], waktu["siang"], pola["merata"])))
     rules.append(("wereng", "sedang", min(daun["sedang"], pola["campuran"], waktu["siang"])))
-    
-    # More responsive rules for wereng (general)
     rules.append(("wereng", "sedang", min(daun["sedang"], pola["merata"])))
     rules.append(("wereng", "sedang", min(daun["sedang"], batang["layu"])))
     rules.append(("wereng", "sedang", min(pola["merata"], batang["layu"])))
@@ -74,29 +70,26 @@ def apply_rules(daun, pola, batang, waktu):
     rules.append(("wereng", "rendah", min(daun["rendah"], pola["merata"])))
     rules.append(("wereng", "rendah", min(daun["rendah"], batang["layu"])))
     
-    # TIKUS RULES
-    rules.append(("tikus", "tinggi", min(batang["potong"], pola["spot"], waktu["malam"])))
-    rules.append(("tikus", "tinggi", min(batang["potong"], pola["spot"])))
-    rules.append(("tikus", "tinggi", min(daun["rendah"], batang["potong"], waktu["malam"])))
-    rules.append(("tikus", "tinggi", min(daun["rendah"], batang["potong"], pola["spot"])))
+    # TIKUS RULES - PRIORITAS UTAMA: POTONG + SPOT + MALAM (tikus aktif malam)
+    # Tinggi confidence rules (malam + tanda kuat)
+    rules.append(("tikus", "tinggi", min(batang["potong"], pola["spot"], waktu["malam"])))  # PRIORITAS 1
+    rules.append(("tikus", "tinggi", min(batang["potong"], waktu["malam"])))                 # PRIORITAS 2
+    rules.append(("tikus", "tinggi", min(pola["spot"], waktu["malam"])))                    # PRIORITAS 3
     
-    # More responsive rules for tikus
+    # Tinggi dengan potong (tapi tanpa waktu spesifik) - lower priority
     rules.append(("tikus", "tinggi", min(batang["potong"], pola["spot"])))
-    rules.append(("tikus", "tinggi", min(batang["potong"], waktu["malam"])))
     
+    # Sedang confidence rules
     rules.append(("tikus", "sedang", min(batang["lubang"], pola["spot"], waktu["malam"])))
     rules.append(("tikus", "sedang", min(daun["rendah"], pola["spot"], batang["potong"])))
     rules.append(("tikus", "sedang", min(batang["lubang"], pola["spot"])))
     rules.append(("tikus", "sedang", min(pola["spot"], waktu["malam"], daun["sedang"])))
-    rules.append(("tikus", "sedang", min(batang["lubang"], waktu["campuran"], pola["spot"])))
-    rules.append(("tikus", "sedang", min(daun["sedang"], pola["spot"], waktu["malam"])))
     
-    # More responsive rules for tikus (general)
-    rules.append(("tikus", "sedang", min(batang["lubang"], pola["spot"])))
-    rules.append(("tikus", "sedang", min(pola["spot"], waktu["malam"])))
-    rules.append(("tikus", "sedang", min(batang["lubang"], waktu["campuran"])))
+    # Kurangi rules campuran untuk tikus (karena tikus tidak aktif pada siang)
+    # HANYA trigger jika ada lubang + spot combination
+    rules.append(("tikus", "sedang", min(batang["lubang"], pola["spot"], waktu["campuran"])))
     
-    rules.append(("tikus", "rendah", min(batang["lubang"], waktu["campuran"])))
+    # Rendah confidence rules  
     rules.append(("tikus", "rendah", min(daun["rendah"], pola["campuran"], waktu["malam"])))
     rules.append(("tikus", "rendah", min(batang["lubang"], daun["rendah"])))
     
