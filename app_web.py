@@ -112,11 +112,11 @@ def defuzzify(rules, hama):
         if target_hama != hama or alpha == 0:
             continue
         if level == "rendah":
-            mf = np.array([trapmf(xi, 0, 0, 20, 40) for xi in x])
+            mf = np.array([trapmf(xi, 0, 0, 25, 50) for xi in x])
         elif level == "sedang":
-            mf = np.array([trimf(xi, 20, 50, 80) for xi in x])
-        else:
-            mf = np.array([trapmf(xi, 60, 80, 100, 100) for xi in x])
+            mf = np.array([trimf(xi, 25, 50, 75) for xi in x])
+        else:  # tinggi
+            mf = np.array([trapmf(xi, 50, 75, 100, 101) for xi in x])
         clipped = np.minimum(alpha, mf)
         aggregated = np.maximum(aggregated, clipped)
     if np.sum(aggregated) == 0:
